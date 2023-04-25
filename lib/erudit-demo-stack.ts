@@ -4,6 +4,8 @@ import * as lambda from "@aws-cdk/aws-lambda";
 import * as nodejs from "@aws-cdk/aws-lambda-nodejs";
 import * as events from "@aws-cdk/aws-events";
 import * as targets from "@aws-cdk/aws-events-targets";
+import * as sqs from "@aws-cdk/aws-sqs";
+import * as lambdaEventSources from "@aws-cdk/aws-lambda-event-sources";
 
 export class EruditDemoStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -32,24 +34,52 @@ export class EruditDemoStack extends cdk.Stack {
       },
       sortKey: {
         name: "GSI1SK",
-        type: dynamodb.AttributeType.STRING,
+        type: dynamodb.AttributeType.NUMBER,
       },
       projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // Create an SQS queue
+    const chatSimulatorQueue = new sqs.Queue(this, "ChatSimulatorQueue", {
+      visibilityTimeout: cdk.Duration.minutes(10),
     });
 
     // Create a Lambda function to insert records into the DynamoDB table
     const chatSimulatorFunction = new nodejs.NodejsFunction(this, "ChatSimulatorFunction", {
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: "handler",
-      entry: "lambda/chatSimulatorHandler.ts", // Path relative to the root directory of the CDK app
+      entry: "lambda/chatSimulatorHandler.ts", 
+      environment: {
+        TABLE_NAME: singleTable.tableName,
+        QUEUE_URL: chatSimulatorQueue.queueUrl,
+      },
+      timeout: cdk.Duration.minutes(5),
+    });
+
+    // Create a Lambda function to consume messages from the SQS queue
+    const chatQueueClassifierFunction = new nodejs.NodejsFunction(this, "chatQueueClassifierFunction", {
+      runtime: lambda.Runtime.NODEJS_14_X,
+      handler: "handler",
+      entry: "lambda/chatQueueClassifierHandler.ts", 
       environment: {
         TABLE_NAME: singleTable.tableName,
       },
-      timeout: cdk.Duration.minutes(15),
+      timeout: cdk.Duration.minutes(5),
     });
 
     // Grant the Lambda function permissions to put items in the DynamoDB table
+    singleTable.grantWriteData(chatQueueClassifierFunction);
+
+    // Add the SQS queue as an event source to the Lambda function
+    chatQueueClassifierFunction.addEventSource(new lambdaEventSources.SqsEventSource(chatSimulatorQueue, {
+      batchSize: 1, 
+    }));
+
+    // Grant the Lambda function permissions to put items in the DynamoDB table
     singleTable.grantWriteData(chatSimulatorFunction);
+
+    // Grant the Lambda function permissions to send messages to the SQS queue
+    chatSimulatorQueue.grantSendMessages(chatSimulatorFunction);    
 
     // Create an EventBridge rule to trigger the Lambda function every hour
     const hourlyRule = new events.Rule(this, "HourlyRule", {

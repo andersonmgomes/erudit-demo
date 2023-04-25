@@ -5,6 +5,7 @@ import DocGptChat, { GptChatOptions } from '@doc-gpt/chat';
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const tableName = process.env.TABLE_NAME || "";
 const openaiApiKey  = process.env.OPENAI_API_KEY  || "";
+const queueUrl = process.env.QUEUE_URL || "";
 
 const prompt = `Three employees from an IT company are chatting about some technical issue in their commom project. 
 The tech stack is TypeScript, SOA, Hexagonal Architecture (Ports and Adapters), DynamoDB w/ Single Table Design, TRPC,
@@ -82,6 +83,7 @@ async function simulateChat(): Promise<Message[]> {
 
 }
 
+const sqs = new AWS.SQS();
 
 async function saveMessage(author: string, message: string, timestamp: number, order: number) {
   const params: AWS.DynamoDB.DocumentClient.PutItemInput = {
@@ -95,6 +97,19 @@ async function saveMessage(author: string, message: string, timestamp: number, o
   };
 
   await dynamoDb.put(params).promise();
+
+  // Send a message to the SQS queue with the saved item object
+  const sqsParams: AWS.SQS.SendMessageRequest = {
+    QueueUrl: queueUrl,
+    MessageBody: JSON.stringify({
+      PK: `Chat#${timestamp}`,
+      order: order,
+      author: author,
+      message: message,
+    }),
+  };
+
+  await sqs.sendMessage(sqsParams).promise();  
 }
 
 export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
