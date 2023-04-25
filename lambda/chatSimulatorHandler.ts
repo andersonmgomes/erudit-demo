@@ -3,8 +3,8 @@ import * as AWS from "aws-sdk";
 import DocGptChat, { GptChatOptions } from '@doc-gpt/chat';
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
-const tableName = process.env.TABLE_NAME;
-const openaiApiKey  = process.env.OPENAI_API_KEY as string;
+const tableName = process.env.TABLE_NAME || "";
+const openaiApiKey  = process.env.OPENAI_API_KEY  || "";
 
 const prompt = `Three employees from an IT company are chatting about some technical issue in their commom project. 
 The tech stack is TypeScript, SOA, Hexagonal Architecture (Ports and Adapters), DynamoDB w/ Single Table Design, TRPC,
@@ -19,12 +19,12 @@ Your answer must ALWAYS follow a typescript JSON format using the '#' char as se
 {"person": "<<person's name>>", "text": "<<dialog text>>"}#{"person": "<<person's name>>", "text": "<<dialog text>>"}#...{"person": "<<person's name>>", "text": "<<dialog text>>"}`;
 
 //setting options using GptChatOptions interface
-const options = {
+const options: GptChatOptions = {
   temperature: 1,
   top_p: 1,
   n: 1,
   max_tokens: 1000,
-} as GptChatOptions;
+};
 
 const gpt = new DocGptChat({
   apiKey: openaiApiKey, 
@@ -37,13 +37,6 @@ interface Message {
   text: string;
 }
 
-
-// Function to extract individual JSON strings from the plain string
-// function extractJsonStrings(plain: string): string[] {
-//   const jsonPattern = /{.*?}/g;
-//   const extractedJsonStrings: string[] = plain.match(jsonPattern) || [];
-//   return extractedJsonStrings;
-// }
 
 // Function to extract individual JSON strings from the plain string
 function extractJsonStrings(plain: string): string[] {
