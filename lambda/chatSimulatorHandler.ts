@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import * as AWS from "aws-sdk";
-import DocGptChat from '@doc-gpt/chat';
+import DocGptChat, { GptChatOptions } from '@doc-gpt/chat';
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const tableName = process.env.TABLE_NAME;
@@ -13,7 +13,18 @@ Employee 1, Employee 2, and Employee 3 are discussing the problem.
 Employee 2 has a high level of stress and burnout.
 Employee 1 is collaborative and is trying to help Employee 2.
 Employee 3 is highly competitive and selfish.
-Give me a new discuss round of the employees about some problem using the related tech stack.`;
+Give me a new discuss round of the employees about some problem using the related tech stack.
+The discussion must always start with a concrete issue on the system.
+Your answer must follow a typescript JSON format in this way:
+<person: person's name, text: dialog text>`;
+
+//setting options using GptChatOptions interface
+const options = {
+  temperature: 1,
+  top_p: 1,
+  n: 1,
+  max_tokens: 1000,
+} as GptChatOptions;
 
 const gpt = new DocGptChat({
   apiKey: openaiApiKey, 
@@ -29,7 +40,7 @@ async function simulateChat(): Promise<string[]> {
       role: 'user',
       content: prompt,
     },
-  ]);
+  ], options);
 
   // print response in console
   console.log('message:', message);
