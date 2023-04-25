@@ -95,7 +95,7 @@ export class EruditDemoStack extends cdk.Stack {
     const tableViewer = new TableViewer(this, "ChatMessagesViewer", {
       table: singleTable,
       title: "Chat Messages", 
-      sortBy: "-PK, order",       // ("-" denotes descending order)
+      sortBy: "-PK",       // ("-" denotes descending order)
     });
 
     // Export the TableViewer endpoint as a stack output
