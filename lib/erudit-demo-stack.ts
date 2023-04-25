@@ -6,6 +6,8 @@ import * as events from "@aws-cdk/aws-events";
 import * as targets from "@aws-cdk/aws-events-targets";
 import * as sqs from "@aws-cdk/aws-sqs";
 import * as lambdaEventSources from "@aws-cdk/aws-lambda-event-sources";
+import { TableViewer } from 'cdk-dynamo-table-viewer'
+
 
 export class EruditDemoStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -89,6 +91,19 @@ export class EruditDemoStack extends cdk.Stack {
     // Add the Lambda function as a target of the EventBridge rule
     hourlyRule.addTarget(new targets.LambdaFunction(chatSimulatorFunction));    
 
+    // Create a TableViewer object to visualize the DynamoDB table content
+    const tableViewer = new TableViewer(this, "ChatMessagesViewer", {
+      table: singleTable,
+      title: "Chat Messages", 
+      sortBy: "-PK, order",       // ("-" denotes descending order)
+    });
+
+    // Export the TableViewer endpoint as a stack output
+    new cdk.CfnOutput(this, "TableViewerEndpoint", {
+      value: tableViewer.endpoint,
+      description: "TableViewer endpoint URL",
+    });
+
   }
-  
+ 
 }

@@ -32,6 +32,7 @@
     "@doc-gpt/chat": "^1.1.7",
     "aws-cdk-lib": "2.76.0",
     "aws-sdk": "^2.1364.0",
+    "cdk-dynamo-table-viewer": "^3.1.2",
     "completion-gpt-api": "^1.0.27",
     "constructs": "^10.0.0",
     "easygpt": "^1.6.2",
