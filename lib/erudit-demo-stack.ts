@@ -1,5 +1,7 @@
 import * as cdk from "@aws-cdk/core";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
+import * as lambda from "@aws-cdk/aws-lambda";
+import * as nodejs from "@aws-cdk/aws-lambda-nodejs";
 
 export class EruditDemoStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -32,6 +34,20 @@ export class EruditDemoStack extends cdk.Stack {
       },
       projectionType: dynamodb.ProjectionType.ALL,
     });
+
+    // Create a Lambda function to insert records into the DynamoDB table
+    const chatSimulatorFunction = new nodejs.NodejsFunction(this, "ChatSimulatorFunction", {
+      runtime: lambda.Runtime.NODEJS_14_X,
+      handler: "handler",
+      entry: "lambda/chatSimulatorHandler.ts", // Path relative to the root directory of the CDK app
+      environment: {
+        TABLE_NAME: singleTable.tableName,
+      },
+    });
+
+    // Grant the Lambda function permissions to put items in the DynamoDB table
+    singleTable.grantWriteData(chatSimulatorFunction);
+
   }
   
 }
