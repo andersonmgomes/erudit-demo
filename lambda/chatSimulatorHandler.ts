@@ -15,8 +15,8 @@ Employee 1 is collaborative and is trying to help Employee 2.
 Employee 3 is highly competitive and selfish.
 Give me a new discuss round of the employees about some problem using the related tech stack.
 The discussion must always start with a concrete issue on the system.
-Your answer must follow a typescript JSON format in this way:
-<person: person's name, text: dialog text>`;
+Your answer must ALWAYS follow a typescript JSON format using the '#' char as separator in this way:
+{"person": "<<person's name>>", "text": "<<dialog text>>"}#{"person": "<<person's name>>", "text": "<<dialog text>>"}#...{"person": "<<person's name>>", "text": "<<dialog text>>"}`;
 
 //setting options using GptChatOptions interface
 const options = {
@@ -31,11 +31,43 @@ const gpt = new DocGptChat({
   defaultSystemMessage: prompt,
 });
 
-async function simulateChat(): Promise<string[]> {
+// Define a TypeScript interface to represent the expected JSON Message structure
+interface Message {
+  person: string;
+  text: string;
+}
+
+
+// Function to extract individual JSON strings from the plain string
+// function extractJsonStrings(plain: string): string[] {
+//   const jsonPattern = /{.*?}/g;
+//   const extractedJsonStrings: string[] = plain.match(jsonPattern) || [];
+//   return extractedJsonStrings;
+// }
+
+// Function to extract individual JSON strings from the plain string
+function extractJsonStrings(plain: string): string[] {
+  return plain.split("#");
+}
+
+
+// Function to convert JSON string to a JavaScript object
+function parseJsonToObject(json: string): Message | null {
+  console.log("Parsing JSON string:", json);
+  try {
+    const parsedObject: Message = JSON.parse(json);
+    return parsedObject;
+  } catch (error) {
+    console.error("Failed to parse JSON string:", error);
+    return null;
+  }
+}
+
+async function simulateChat(): Promise<Message[]> {
   console.log("Prompt:", prompt);
   
   // Get a full response from the api
-  const message = await gpt.SimpleChat([
+  const response = await gpt.SimpleChat([
     {
       role: 'user',
       content: prompt,
@@ -43,18 +75,28 @@ async function simulateChat(): Promise<string[]> {
   ], options);
 
   // print response in console
-  console.log('message:', message);
+  console.log('model response:', response);
 
-  return [message];
+  // Extract individual JSON strings from the plain string
+  const jsonStrings: string[] = extractJsonStrings(response);
+
+  // Convert JSON strings to JavaScript objects
+  const messageObjects: (Message | null)[] = jsonStrings.map(parseJsonToObject);
+
+  console.log("Converted JSON strings to objects:", messageObjects);
+
+  return messageObjects.filter((messageObject): messageObject is Message => messageObject !== null);
+
 }
 
 
-async function saveMessage(message: string, timestamp: number) {
+async function saveMessage(author: string, message: string, timestamp: number, order: number) {
   const params: AWS.DynamoDB.DocumentClient.PutItemInput = {
     TableName: tableName as string,
     Item: {
       PK: `Chat#${timestamp}`,
-      SK: `Message#${timestamp}`,
+      order: order,
+      author: author,
       message: message,
     },
   };
@@ -66,9 +108,11 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
   try {
     const chatMessages = await simulateChat();
 
+    const timestamp = Date.now();
+    // initialize a order variable to save the order of the messages
+    let order = 0;
     for (const message of chatMessages) {
-      const timestamp = Date.now();
-      await saveMessage(message, timestamp);
+      await saveMessage(message.person, message.text, timestamp, order++);
     }
 
     return {

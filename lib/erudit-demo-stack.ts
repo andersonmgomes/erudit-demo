@@ -16,8 +16,8 @@ export class EruditDemoStack extends cdk.Stack {
         type: dynamodb.AttributeType.STRING,
       },
       sortKey: {
-        name: "SK",
-        type: dynamodb.AttributeType.STRING,
+        name: "order",
+        type: dynamodb.AttributeType.NUMBER,
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Not recommended for production
