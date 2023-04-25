@@ -6,14 +6,14 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const tableName = process.env.TABLE_NAME;
 const openaiApiKey  = process.env.OPENAI_API_KEY as string;
 
-const prompt = `Three employees from an IT company are chatting about a technical issue. 
+const prompt = `Three employees from an IT company are chatting about some technical issue in their commom project. 
 The tech stack is TypeScript, SOA, Hexagonal Architecture (Ports and Adapters), DynamoDB w/ Single Table Design, TRPC,
 AWS CDK, Docker, React, Redux, React-Query, Jotai, Zustand.
-Employee 1, Employee 2, and Employee 3 are discussing the problem.
+Employee 1, Employee 2, and Employee 3 are discussing the issue.
 Employee 2 has a high level of stress and burnout.
-Employee 1 is collaborative and is trying to help Employee 2.
+Employee 1 is collaborative and is trying to help everyone.
 Employee 3 is highly competitive and selfish.
-Give me a new discuss round of the employees about some problem using the related tech stack.
+Give me a new discuss round of the employees about some random problem using the related tech stack.
 The discussion must always start with a concrete issue on the system.
 Your answer must ALWAYS follow a typescript JSON format using the '#' char as separator in this way:
 {"person": "<<person's name>>", "text": "<<dialog text>>"}#{"person": "<<person's name>>", "text": "<<dialog text>>"}#...{"person": "<<person's name>>", "text": "<<dialog text>>"}`;
