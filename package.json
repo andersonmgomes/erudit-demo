@@ -23,12 +23,17 @@
   },
   "dependencies": {
     "@aws-cdk/aws-dynamodb": "^1.199.0",
+    "@aws-cdk/aws-events": "^1.199.0",
+    "@aws-cdk/aws-events-targets": "^1.97.0",
     "@aws-cdk/aws-lambda": "^1.199.0",
     "@aws-cdk/aws-lambda-nodejs": "^1.199.0",
     "@aws-cdk/core": "^1.199.0",
+    "@doc-gpt/chat": "^1.1.7",
     "aws-cdk-lib": "2.76.0",
     "aws-sdk": "^2.1364.0",
+    "completion-gpt-api": "^1.0.27",
     "constructs": "^10.0.0",
+    "easygpt": "^1.6.2",
     "openai": "^3.2.1"
   }
 }
