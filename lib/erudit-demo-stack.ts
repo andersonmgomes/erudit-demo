@@ -85,7 +85,7 @@ export class EruditDemoStack extends cdk.Stack {
 
     // Create an EventBridge rule to trigger the Lambda function every hour
     const hourlyRule = new events.Rule(this, "HourlyRule", {
-      schedule: events.Schedule.rate(cdk.Duration.hours(1)),
+      schedule: events.Schedule.rate(cdk.Duration.hours(1000)), // 1000 hours = 41 days to avoid exceeding the free tier
     });
 
     // Add the Lambda function as a target of the EventBridge rule
